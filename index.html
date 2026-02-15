@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>X体育館利用日誌</title>
+    <title>浦佐体育館利用日誌</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@700;900&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -48,7 +48,7 @@
 <body>
 
     <div class="container">
-        <h1>X体育館利用日誌</h1>
+        <h1>浦佐体育館利用日誌</h1>
         <form id="usageForm">
             <label>利用年月日</label>
             <input type="date" id="date" required>
@@ -58,6 +58,8 @@
                 <option value="一般">一般</option>
                 <option value="登録団体">登録団体</option>
                 <option value="地域クラブ">地域クラブ</option>
+                <option value="スポパラ">スポパラ</option>
+                <option value="その他">その他</option>
             </select>
 
             <label>利用者（団体名 または 氏名）</label>
@@ -121,6 +123,7 @@
             if(hours < 0) hours += 24;
             hours = Math.round(hours * 10) / 10;
 
+            // 送信するデータの中身を更新
             const data = {
                 date: document.getElementById('date').value,
                 month: document.getElementById('date').value.substring(0, 7),
@@ -130,7 +133,9 @@
                 startTime: startTime,
                 endTime: endTime,
                 hours: hours,
-                users: parseInt(document.getElementById('users').value)
+                users: parseInt(document.getElementById('users').value),
+                keyReturner: document.getElementById('keyReturner').value, // ★追加
+                keyTime: document.getElementById('keyTime').value          // ★追加
             };
 
             // ★ここにあなたのGASのURLを貼り付けてください
@@ -141,7 +146,7 @@
                 body: JSON.stringify(data)
             })
             .then(() => {
-                alert('お疲れさまでした！');
+                alert('入力ありがとうございます。お疲れさまでした！');
                 location.reload(); // 送信後に画面をリセット
             })
             .catch(() => {
