@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>X体育館利用日誌</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --color-bg: #f4f6f9;
+            --color-primary: #ff5722;
+            --color-secondary: #0d47a1;
+            --color-text: #263238;
+            --color-border: #cfd8dc;
+        }
+        body {
+            font-family: 'Noto Sans JP', sans-serif;
+            background-color: var(--color-bg);
+            color: var(--color-text);
+            margin: 0; padding: 20px;
+            display: flex; flex-direction: column; align-items: center;
+        }
+        .container {
+            width: 100%; max-width: 500px;
+            background: white; padding: 30px;
+            border-top: 6px solid var(--color-primary);
+            border-radius: 4px; box-shadow: 0 10px 20px rgba(0,0,0,0.08);
+            box-sizing: border-box;
+        }
+        h1 { text-align: center; color: var(--color-secondary); font-size: 24px; margin-bottom: 30px; border-bottom: 2px solid var(--color-border); padding-bottom: 15px;}
+        label { display: block; margin-top: 20px; color: var(--color-secondary); font-size: 14px; font-weight: 900;}
+        input, select, textarea {
+            width: 100%; padding: 12px; margin-top: 8px;
+            border: 2px solid var(--color-border); border-radius: 4px;
+            font-family: inherit; font-size: 16px; box-sizing: border-box;
+        }
+        .time-inputs { display: flex; align-items: center; gap: 10px; }
+        .hidden { display: none !important; }
+        button {
+            width: 100%; padding: 16px; margin-top: 35px;
+            background-color: var(--color-primary); color: white;
+            border: none; border-radius: 4px; font-weight: 900; font-size: 18px;
+            cursor: pointer; transition: 0.2s;
+        }
+        button:disabled { background-color: #ccc; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>X体育館利用日誌</h1>
+        <form id="usageForm">
+            <label>利用年月日</label>
+            <input type="date" id="date" required>
+
+            <label>利用者区分</label>
+            <select id="type" required onchange="toggleRegNum()">
+                <option value="一般">一般</option>
+                <option value="登録団体">登録団体</option>
+                <option value="地域クラブ">地域クラブ</option>
+            </select>
+
+            <label>利用者（団体名 または 氏名）</label>
+            <input type="text" id="name" placeholder="例：南魚沼スポーツクラブ" required>
+
+            <div id="regNumContainer" class="hidden">
+                <label>登録番号</label>
+                <input type="number" id="regNum" placeholder="例：1001">
+            </div>
+
+            <label>利用時間（開始〜終了）</label>
+            <div class="time-inputs">
+                <input type="time" id="startTime" required>
+                <span>〜</span>
+                <input type="time" id="endTime" required>
+            </div>
+
+            <label>利用人数</label>
+            <input type="number" id="users" min="1" required>
+
+            <label>カギ返却者</label>
+            <input type="text" id="keyReturner" required>
+
+            <label>カギ返却時間</label>
+            <input type="time" id="keyTime" required>
+
+            <label>備考</label>
+            <textarea id="remarks" rows="2"></textarea>
+
+            <button type="submit" id="submitBtn">日誌を送信する</button>
+        </form>
+    </div>
+
+    <script>
+        document.getElementById('date').valueAsDate = new Date();
+
+        function toggleRegNum() {
+            const type = document.getElementById('type').value;
+            const container = document.getElementById('regNumContainer');
+            const input = document.getElementById('regNum');
+            if (type === '登録団体' || type === '地域クラブ') {
+                container.classList.remove('hidden');
+                input.required = true;
+            } else {
+                container.classList.add('hidden');
+                input.required = false;
+            }
+        }
+
+        document.getElementById('usageForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = true;
+            btn.innerText = '送信中...';
+
+            const startTime = document.getElementById('startTime').value;
+            const endTime = document.getElementById('endTime').value;
+            const [sh, sm] = startTime.split(':').map(Number);
+            const [eh, em] = endTime.split(':').map(Number);
+            let hours = (eh + em/60) - (sh + sm/60);
+            if(hours < 0) hours += 24;
+            hours = Math.round(hours * 10) / 10;
+
+            const data = {
+                date: document.getElementById('date').value,
+                month: document.getElementById('date').value.substring(0, 7),
+                type: document.getElementById('type').value,
+                regNum: document.getElementById('regNum').value || '-',
+                name: document.getElementById('name').value,
+                startTime: startTime,
+                endTime: endTime,
+                hours: hours,
+                users: parseInt(document.getElementById('users').value)
+            };
+
+            // ★ここにあなたのGASのURLを貼り付けてください
+            const GAS_URL = "https://script.google.com/macros/s/AKfycbzxpcCVMsWw1qFBiJ-rQcjBM8y9ICy31ZkMz6PAo26iRjNBbmdgHuZK_UOiHrebmKY6/exec";
+
+            fetch(GAS_URL, {
+                method: "POST",
+                body: JSON.stringify(data)
+            })
+            .then(() => {
+                alert('お疲れさまでした！');
+                location.reload(); // 送信後に画面をリセット
+            })
+            .catch(() => {
+                alert('送信に失敗しました。電波の良い場所で再度お試しください。');
+                btn.disabled = false;
+                btn.innerText = '日誌を送信する';
+            });
+        });
+    </script>
+</body>
+</html>
